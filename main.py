@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pptx import Presentation
 from pptx.util import Inches, Pt
-from pptx.dml.color import RgbColor
+from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 import os, uuid
 
@@ -32,14 +32,14 @@ def generate_ppt(req: PPTRequest):
     p.text = req.main_title
     p.font.size = Pt(40)
     p.font.bold = True
-    p.font.color.rgb = RgbColor(0, 51, 102)
+    p.font.color.rgb = RGBColor(0, 51, 102)
     p.alignment = PP_ALIGN.CENTER
 
     tb2 = slide.shapes.add_textbox(Inches(0.5), Inches(3.8), Inches(12.3), Inches(1))
     p2 = tb2.text_frame.paragraphs[0]
     p2.text = req.subtitle
     p2.font.size = Pt(18)
-    p2.font.color.rgb = RgbColor(100, 100, 100)
+    p2.font.color.rgb = RGBColor(100, 100, 100)
     p2.alignment = PP_ALIGN.CENTER
 
     # 内容页
@@ -50,7 +50,7 @@ def generate_ppt(req: PPTRequest):
         tp.text = f"{idx}. {s.title}"
         tp.font.size = Pt(28)
         tp.font.bold = True
-        tp.font.color.rgb = RgbColor(0, 51, 102)
+        tp.font.color.rgb = RGBColor(0, 51, 102)
 
         bbox = slide.shapes.add_textbox(Inches(0.7), Inches(1.4), Inches(12), Inches(5.5))
         tf = bbox.text_frame
