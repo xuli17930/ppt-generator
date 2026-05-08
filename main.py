@@ -85,7 +85,62 @@ def generate_ppt(req: PPTRequest):
 
     # ========== 内容页（智能配图） ==========
     data_img_idx = 0  # 配图索引
-    
+
+        # ========== 【新增】关键数据看板页 ==========
+    if req.data_points and len(req.data_points) > 0:
+        slide = prs.slides.add_slide(blank)
+        
+        # 背景
+        bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5))
+        bg.fill.solid(); bg.fill.fore_color.rgb = DARK_BLUE; bg.line.fill.background()
+        
+        # 标题
+        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.4), Inches(12.3), Inches(0.8))
+        tp = title_box.text_frame.paragraphs[0]
+        tp.text = "核心数据"; tp.font.size = Pt(28); tp.font.bold = True
+        tp.font.color.rgb = WHITE; tp.font.name = "Microsoft YaHei"
+        
+        # 数据卡片（每行最多3个）
+        card_width = 4.0
+        start_x = 0.8
+        start_y = 1.5
+        gap = 0.3
+        
+        for i, dp in enumerate(req.data_points[:3]):
+            x = start_x + (i % 3) * (card_width + gap)
+            y = start_y + (i // 3) * 2.5
+            
+            # 卡片背景
+            card = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE, Inches(x), Inches(y), 
+                Inches(card_width), Inches(2.0)
+            )
+            card.fill.solid(); card.fill.fore_color.rgb = WHITE
+            card.line.color.rgb = BRIGHT_BLUE
+            
+            # 大数字
+            num_box = slide.shapes.add_textbox(
+                Inches(x + 0.2), Inches(y + 0.2), Inches(card_width - 0.4), Inches(1.0)
+            )
+            np = num_box.text_frame.paragraphs[0]
+            
+            if dp.type == 'compare':
+                np.text = f"{dp.before} → {dp.after}"
+            else:
+                np.text = dp.value
+            
+            np.font.size = Pt(32); np.font.bold = True
+            np.font.color.rgb = BRIGHT_BLUE; np.alignment = PP_ALIGN.CENTER
+            np.font.name = "Microsoft YaHei"
+            
+            # 标签
+            label_box = slide.shapes.add_textbox(
+                Inches(x + 0.2), Inches(y + 1.2), Inches(card_width - 0.4), Inches(0.5)
+            )
+            lp = label_box.text_frame.paragraphs[0]
+            lp.text = dp.label; lp.font.size = Pt(14)
+            lp.font.color.rgb = TEXT_GRAY; lp.alignment = PP_ALIGN.CENTER
+            lp.font.name = "Microsoft YaHei"
     for idx, s in enumerate(req.slides, 1):
         slide = prs.slides.add_slide(blank)
         
