@@ -87,58 +87,70 @@ def generate_ppt(req: PPTRequest):
     bottom_line.line.fill.background()
 
     # ========== 文章综述页 ==========
+       # ========== 文章综述页（自动分页） ==========
     if req.summary and len(req.summary) > 0:
-        slide = prs.slides.add_slide(blank)
+        # 按段落拆分，每页最多 600 字
+        all_paragraphs = [p.strip() for p in req.summary.split('\n') if p.strip()]
+        total_chars = req.summary.length  # 总字数
         
-        bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5))
-        bg.fill.solid()
-        bg.fill.fore_color.rgb = WHITE
-        bg.line.fill.background()
+        # 如果超过 600 字，拆成两页
+        max_chars_per_page = 600
+        pages = []
+        current_page = []
+        current_count = 0
         
-        header_bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(1.0))
-        header_bg.fill.solid()
-        header_bg.fill.fore_color.rgb = LIGHT_BLUE
-        header_bg.line.fill.background()
+        for para in all_paragraphs:
+            if current_count + para.length > max_chars_per_page and current_page.length > 0:
+                pages.push(current_page)
+                current_page = [para]
+                current_count = para.length
+            else:
+                current_page.push(para)
+                current_count += para.length
         
-        left_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(0.15), Inches(1.0))
-        left_bar.fill.solid()
-        left_bar.fill.fore_color.rgb = BRIGHT_BLUE
-        left_bar.line.fill.background()
+        if current_page.length > 0:
+            pages.push(current_page)
         
-        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(12.3), Inches(0.7))
-        tp = title_box.text_frame.paragraphs[0]
-        tp.text = "文章综述"
-        tp.font.size = Pt(24)
-        tp.font.bold = True
-        tp.font.color.rgb = DARK_BLUE
-        tp.font.name = "Microsoft YaHei"
-        
-        content_bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(1.2), Inches(12.3), Inches(6.0))
-        content_bg.fill.solid()
-        content_bg.fill.fore_color.rgb = RGBColor(250, 250, 250)
-        content_bg.line.color.rgb = RGBColor(220, 220, 220)
-        
-        text_box = slide.shapes.add_textbox(Inches(0.8), Inches(1.4), Inches(11.8), Inches(5.6))
-        tf = text_box.text_frame
-        tf.word_wrap = True
-        
-        # 【修正】Python 列表推导式，不是 JS 语法
-        paragraphs = [p.strip() for p in req.summary.split('\n') if p.strip()]
-        
-        for i, para in enumerate(paragraphs):
-            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            p.text = para
-            p.font.size = Pt(14)
-            p.font.color.rgb = TEXT_DARK
-            p.space_after = Pt(10)
-            p.font.name = "Microsoft YaHei"
-            p.level = 0
-        
-        footer_line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(7.35), Inches(12.3), Inches(0.02))
-        footer_line.fill.solid()
-        footer_line.fill.fore_color.rgb = BRIGHT_BLUE
-        footer_line.line.fill.background()
-
+        # 如果只有一页，标题是"文章综述"；有两页则"文章综述（上/下）"
+        for page_idx, page_paras in enumerate(pages):
+            slide = prs.slides.add_slide(blank)
+            
+            bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5))
+            bg.fill.solid(); bg.fill.fore_color.rgb = WHITE; bg.line.fill.background()
+            
+            header_bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(1.0))
+            header_bg.fill.solid(); header_bg.fill.fore_color.rgb = LIGHT_BLUE; header_bg.line.fill.background()
+            
+            left_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(0.15), Inches(1.0))
+            left_bar.fill.solid(); left_bar.fill.fore_color.rgb = BRIGHT_BLUE; left_bar.line.fill.background()
+            
+            # 动态标题
+            title_text = "文章综述" if pages.length === 1 : `文章综述（${page_idx === 0 ? '上' : '下'}）`
+            title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(12.3), Inches(0.7))
+            tp = title_box.text_frame.paragraphs[0]
+            tp.text = title_text
+            tp.font.size = Pt(24); tp.font.bold = True
+            tp.font.color.rgb = DARK_BLUE; tp.font.name = "Microsoft YaHei"
+            
+            content_bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(1.2), Inches(12.3), Inches(6.0))
+            content_bg.fill.solid(); content_bg.fill.fore_color.rgb = RGBColor(250, 250, 250)
+            content_bg.line.color.rgb = RGBColor(220, 220, 220)
+            
+            text_box = slide.shapes.add_textbox(Inches(0.8), Inches(1.4), Inches(11.8), Inches(5.8))
+            tf = text_box.text_frame; tf.word_wrap = True
+            
+            for i, para in enumerate(page_paras):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p.text = para
+                p.font.size = Pt(12)       # 12pt 兼顾可读性和容量
+                p.font.color.rgb = TEXT_DARK
+                p.space_after = Pt(8)
+                p.font.name = "Microsoft YaHei"
+                p.level = 0
+            
+            footer_line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(7.35), Inches(12.3), Inches(0.02))
+            footer_line.fill.solid(); footer_line.fill.fore_color.rgb = BRIGHT_BLUE; footer_line.line.fill.background()
+            
     # ========== 核心数据看板页 ==========
     if req.data_points and len(req.data_points) > 0:
         slide = prs.slides.add_slide(blank)
