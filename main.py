@@ -23,6 +23,7 @@ class PPTRequest(BaseModel):
     cover_image: str = ""
     data_images: List[str] = []
     data_points: List[Dict] = []
+    summary: str = ""  # 【新增】
 
 # 配色方案
 DARK_BLUE = RGBColor(0, 32, 96)
@@ -84,7 +85,66 @@ def generate_ppt(req: PPTRequest):
     bottom_line.fill.solid()
     bottom_line.fill.fore_color.rgb = BRIGHT_BLUE
     bottom_line.line.fill.background()
-
+    
+    # ========== 【新增】文章综述页 ==========
+    if req.summary and len(req.summary) > 0:
+        slide = prs.slides.add_slide(blank)
+        
+        # 背景
+        bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5))
+        bg.fill.solid()
+        bg.fill.fore_color.rgb = WHITE
+        bg.line.fill.background()
+        
+        # 顶部标题栏
+        header_bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(1.0))
+        header_bg.fill.solid()
+        header_bg.fill.fore_color.rgb = LIGHT_BLUE
+        header_bg.line.fill.background()
+        
+        left_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(0.15), Inches(1.0))
+        left_bar.fill.solid()
+        left_bar.fill.fore_color.rgb = BRIGHT_BLUE
+        left_bar.line.fill.background()
+        
+        # 标题
+        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(12.3), Inches(0.7))
+        tp = title_box.text_frame.paragraphs[0]
+        tp.text = "文章综述"
+        tp.font.size = Pt(24)
+        tp.font.bold = True
+        tp.font.color.rgb = DARK_BLUE
+        tp.font.name = "Microsoft YaHei"
+        
+        # 综述内容区域（全宽，适合长文本）
+        content_bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(1.2), Inches(12.3), Inches(6.0))
+        content_bg.fill.solid()
+        content_bg.fill.fore_color.rgb = RGBColor(250, 250, 250)
+        content_bg.line.color.rgb = RGBColor(220, 220, 220)
+        
+        # 文本框（带边距）
+        text_box = slide.shapes.add_textbox(Inches(0.8), Inches(1.4), Inches(11.8), Inches(5.6))
+        tf = text_box.text_frame
+        tf.word_wrap = True
+        
+        # 把长文本分段（每段一个 paragraph）
+        const paragraphs = req.summary.split('\n').filter(p => p.trim().length > 0);
+        
+        for i, para in enumerate(paragraphs):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            p.text = para.trim()
+            p.font.size = Pt(14)
+            p.font.color.rgb = TEXT_DARK
+            p.space_after = Pt(10)
+            p.font.name = "Microsoft YaHei"
+            p.level = 0
+        
+        # 底部装饰线
+        footer_line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(7.35), Inches(12.3), Inches(0.02))
+        footer_line.fill.solid()
+        footer_line.fill.fore_color.rgb = BRIGHT_BLUE
+        footer_line.line.fill.background()
+  
     # ========== 关键数据看板页 ==========
     if req.data_points and len(req.data_points) > 0:
         slide = prs.slides.add_slide(blank)
