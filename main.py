@@ -86,12 +86,11 @@ def generate_ppt(req: PPTRequest):
     bottom_line.fill.fore_color.rgb = BRIGHT_BLUE
     bottom_line.line.fill.background()
 
-    # ========== 文章综述页 ==========
-       # ========== 文章综述页（自动分页） ==========
+    
+    # ========== 文章综述页（自动分页） ==========
     if req.summary and len(req.summary) > 0:
         # 按段落拆分，每页最多 600 字
         all_paragraphs = [p.strip() for p in req.summary.split('\n') if p.strip()]
-        total_chars = req.summary.length  # 总字数
         
         # 如果超过 600 字，拆成两页
         max_chars_per_page = 600
@@ -100,16 +99,16 @@ def generate_ppt(req: PPTRequest):
         current_count = 0
         
         for para in all_paragraphs:
-            if current_count + para.length > max_chars_per_page and current_page.length > 0:
-                pages.push(current_page)
+            if current_count + len(para) > max_chars_per_page and len(current_page) > 0:
+                pages.append(current_page)
                 current_page = [para]
-                current_count = para.length
+                current_count = len(para)
             else:
-                current_page.push(para)
-                current_count += para.length
+                current_page.append(para)
+                current_count += len(para)
         
-        if current_page.length > 0:
-            pages.push(current_page)
+        if len(current_page) > 0:
+            pages.append(current_page)
         
         # 如果只有一页，标题是"文章综述"；有两页则"文章综述（上/下）"
         for page_idx, page_paras in enumerate(pages):
@@ -124,8 +123,12 @@ def generate_ppt(req: PPTRequest):
             left_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(0.15), Inches(1.0))
             left_bar.fill.solid(); left_bar.fill.fore_color.rgb = BRIGHT_BLUE; left_bar.line.fill.background()
             
-            # 动态标题
-            title_text = "文章综述" if pages.length === 1 : `文章综述（${page_idx === 0 ? '上' : '下'}）`
+            # 动态标题 - 纯 Python 语法
+            if len(pages) == 1:
+                title_text = "文章综述"
+            else:
+                title_text = "文章综述（上）" if page_idx == 0 else "文章综述（下）"
+            
             title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(12.3), Inches(0.7))
             tp = title_box.text_frame.paragraphs[0]
             tp.text = title_text
