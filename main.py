@@ -327,7 +327,7 @@ def generate_ppt(req: PPTRequest):
     tp.font.name = "Microsoft YaHei"
 
     # 保存
-       os.makedirs("/app/output", exist_ok=True)
+    os.makedirs("/app/output", exist_ok=True)
     
     # 用文章标题作为文件名，清理非法字符
     safe_title = re.sub(r'[\\/:*?"<>|]', '', req.main_title)
