@@ -49,45 +49,49 @@ def generate_ppt(req: PPTRequest):
     prs.slide_height = Inches(7.5)
     blank = prs.slide_layouts[6]
 
-    # ========== 封面页 ==========
+       # ========== 封面页（标题与图片不重叠） ==========
     slide = prs.slides.add_slide(blank)
     
     if req.cover_image:
         img_stream = download_image(req.cover_image)
         if img_stream:
-            slide.shapes.add_picture(img_stream, Inches(5.3), Inches(0), height=Inches(7.5))
+            # 图片从 x=6.0 开始，给文字留出 5.2 英寸安全区
+            slide.shapes.add_picture(img_stream, Inches(6.0), Inches(0), height=Inches(7.5))
+            # 左侧遮罩（淡蓝背景）
             mask = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(6.0), Inches(7.5))
             mask.fill.solid()
             mask.fill.fore_color.rgb = LIGHT_BLUE
             mask.line.fill.background()
     
+    # 顶部装饰条
     top_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(0.25))
-    top_bar.fill.solid()
-    top_bar.fill.fore_color.rgb = DARK_BLUE
-    top_bar.line.fill.background()
+    top_bar.fill.solid(); top_bar.fill.fore_color.rgb = DARK_BLUE; top_bar.line.fill.background()
     
-    tb = slide.shapes.add_textbox(Inches(0.8), Inches(2.2), Inches(5.0), Inches(1.5))
-    p = tb.text_frame.paragraphs[0]
+    # 主标题（宽度限制在 5.0 英寸，自动换行）
+    tb = slide.shapes.add_textbox(Inches(0.8), Inches(2.0), Inches(5.0), Inches(1.8))
+    tf = tb.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
     p.text = req.main_title
-    p.font.size = Pt(32)
+    p.font.size = Pt(28)        # 稍微缩小，长标题也能显示
     p.font.bold = True
     p.font.color.rgb = DARK_BLUE
     p.font.name = "Microsoft YaHei"
     
-    tb2 = slide.shapes.add_textbox(Inches(0.8), Inches(3.8), Inches(5.0), Inches(1.0))
-    p2 = tb2.text_frame.paragraphs[0]
+    # 副标题
+    tb2 = slide.shapes.add_textbox(Inches(0.8), Inches(4.0), Inches(5.0), Inches(1.2))
+    tf2 = tb2.text_frame
+    tf2.word_wrap = True
+    p2 = tf2.paragraphs[0]
     p2.text = req.subtitle
-    p2.font.size = Pt(16)
+    p2.font.size = Pt(14)
     p2.font.color.rgb = TEXT_GRAY
     p2.font.name = "Microsoft YaHei"
     
-    bottom_line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(5.0), Inches(2.5), Inches(0.03))
-    bottom_line.fill.solid()
-    bottom_line.fill.fore_color.rgb = BRIGHT_BLUE
-    bottom_line.line.fill.background()
+    # 底部装饰线
+    bottom_line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(5.5), Inches(2.5), Inches(0.03))
+    bottom_line.fill.solid(); bottom_line.fill.fore_color.rgb = BRIGHT_BLUE; bottom_line.line.fill.background()
 
-    
-    # ========== 文章综述页（自动分页） ==========
        # ========== 文章综述页（大容量 + 智能分页） ==========
     if req.summary and len(req.summary) > 0:
         paragraphs = [p.strip() for p in req.summary.split('\n') if p.strip()]
