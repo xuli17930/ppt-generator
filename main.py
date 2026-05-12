@@ -341,7 +341,11 @@ def generate_ppt(req: PPTRequest):
     if not base:
         base = "https://" + os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")
     return {"download_url": f"{base}/download/{fname}", "filename": fname}
-
+    
+@app.get("/")
+def health_check():
+    return {"status": "ok", "service": "ppt-generator"}
+    
 @app.get("/download/{filename}")
 def download(filename: str):
     fpath = f"/app/output/{filename}"
