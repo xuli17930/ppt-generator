@@ -328,7 +328,11 @@ def generate_ppt(req: PPTRequest):
 
     # 保存
     os.makedirs("/app/output", exist_ok=True)
-    fname = f"{uuid.uuid4().hex[:8]}.pptx"
+    # 用文章标题作为文件名，清理非法字符
+import re
+safe_title = re.sub(r'[\\/:*?"<>|]', '', req.main_title)  # 去掉Windows/Unix非法字符
+safe_title = safe_title[:50]  # 限制长度50字，避免文件名过长
+fname = f"{safe_title}.pptx"
     fpath = f"/app/output/{fname}"
     prs.save(fpath)
     
