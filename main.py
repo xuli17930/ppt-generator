@@ -342,7 +342,7 @@ def generate_ppt(req: PPTRequest):
         base = "https://" + os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")
     return {"download_url": f"{base}/download/{fname}", "filename": fname}
     
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "ok", "service": "ppt-generator"}
     
